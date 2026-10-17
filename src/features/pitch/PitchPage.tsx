@@ -6,9 +6,9 @@ const problemPoints = [
   "Good inventory sits while sellers search.",
 ] as const;
 
-const listingFacts = ["1881-S", "Morgan Dollar", "MS-64", "Silver"] as const;
+const listingFacts = ["1824", "Mexico City Mint", "8 Reales", "Silver"] as const;
 
-const buyerSignals = ["Morgan Dollar collectors", "VAM specialists", "Silver-dollar dealers"] as const;
+const buyerSignals = ["Mexican coin collectors", "Cap-and-rays specialists", "Latin American coin dealers"] as const;
 
 const outcomeSteps = [
   ["01", "Set the terms", "Price range, timing, and what a good deal looks like."],
@@ -16,13 +16,13 @@ const outcomeSteps = [
   ["03", "Carry the deal", "Move from buyer search through a seller-approved close."],
 ] as const;
 
-function MorganDollarImage() {
+function MexicanEightRealesImage() {
   return (
     <figure className="pitchdeck-coin">
       <div className="pitchdeck-coin__orbit pitchdeck-coin__orbit--outer" />
       <div className="pitchdeck-coin__orbit pitchdeck-coin__orbit--inner" />
-      <img className="pitchdeck-coin__image" src="/assets/morgan-dollar-1881-s.jpg" alt="1881-S Morgan Dollar obverse" />
-      <figcaption>Morgan Dollar</figcaption>
+      <img className="pitchdeck-coin__image" src="/assets/mexican-8-reales-1824.jpg" alt="1824 Mexican 8 reales, cap-and-rays side" />
+      <figcaption>Mexican 8 Reales</figcaption>
     </figure>
   );
 }
@@ -57,7 +57,7 @@ export function PitchPage() {
           </ul>
         </div>
         <div className="pitchdeck-problem-art">
-          <MorganDollarImage />
+          <MexicanEightRealesImage />
         </div>
       </section>
 
@@ -73,7 +73,7 @@ export function PitchPage() {
         <div className="pitchdeck-match" aria-label="Example CoinScout matching flow">
           <div className="pitchdeck-match__listing">
             <span className="pitchdeck-match__eyebrow">ONE LISTING</span>
-            <strong>1881-S<br />MORGAN DOLLAR</strong>
+            <strong>1824<br />MEXICAN 8 REALES</strong>
             <ul>
               {listingFacts.map((fact) => <li key={fact}>{fact}</li>)}
             </ul>
