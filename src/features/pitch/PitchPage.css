@@ -32,7 +32,6 @@
 
 .pitchdeck a { color: inherit; }
 
-/* The shared shell stays present, but the deck has no fourth footer panel. */
 body:has(.pitchdeck) {
   --pitch-paper: hsl(0 0% 97.6%);
   --pitch-line: hsl(159 19% 82%);
@@ -43,25 +42,6 @@ body:has(.pitchdeck) {
 }
 
 html:has(.pitchdeck) { scroll-snap-type: y proximity; }
-
-body:has(.pitchdeck) .site-shell { background: var(--pitch-paper); }
-body:has(.pitchdeck) .site-header {
-  width: min(1280px, calc(100% - 64px));
-  border-color: var(--pitch-line);
-}
-body:has(.pitchdeck) .site-footer { display: none; }
-body:has(.pitchdeck) .brand {
-  color: var(--pitch-ink);
-  font-family: "Inter", var(--sans, system-ui, sans-serif);
-  font-size: 1.13rem;
-  font-weight: 900;
-  letter-spacing: -.075em;
-}
-body:has(.pitchdeck) .brand > span > span,
-body:has(.pitchdeck) .brand__mark { color: var(--pitch-forest); }
-body:has(.pitchdeck) .site-header nav a { color: var(--pitch-muted); }
-body:has(.pitchdeck) .site-header nav a:hover,
-body:has(.pitchdeck) .site-header nav a.active { color: var(--pitch-forest); }
 
 .pitchdeck-nav {
   min-height: 61px;
@@ -520,8 +500,6 @@ body:has(.pitchdeck) .site-header nav a.active { color: var(--pitch-forest); }
 }
 
 @media (max-width: 720px) {
-  body:has(.pitchdeck) .site-header { width: min(100% - 32px, 1280px); }
-
   .pitchdeck-nav {
     min-height: 55px;
     gap: 16px;

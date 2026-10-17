@@ -1,6 +1,6 @@
-# CoinScout / Atlas Scout
+# CoinScout
 
-Atlas Scout turns a seller-selected Instagram coin listing into cited, reviewable public research leads. The live product flow is: connect an authorized Instagram account, select one post, set a local-only price range, then search public sources. Research receives only the seller-selected caption; it never receives pricing rules, sends messages, takes payment, reserves inventory, or creates shipping labels.
+CoinScout currently ships a three-slide pitch about focused buyer discovery for collectible coins. The public site exposes the pitch deck only.
 
 ## Run locally
 
@@ -13,12 +13,8 @@ npm run build
 
 ## Public routes
 
-- `/` — intentionally blank
-- `/scout` — interactive Atlas Scout listing-to-research flow
 - `/pitch` — three-slide hackathon pitch
-- `/deck` — compatibility redirect to `/pitch`
-- `/privacy` — privacy notice
-- `/data-deletion` — data-deletion instructions
+- `/`, `/scout`, `/deck`, `/privacy`, and `/data-deletion` redirect to `/pitch`
 
 ## Environment policy
 
