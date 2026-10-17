@@ -13,10 +13,10 @@ npm run build
 
 ## Public routes
 
-- `/` — launch page
+- `/` — intentionally blank
 - `/scout` — interactive Atlas Scout listing-to-research flow
-- `/deck` — two-page product pitch
-- `/pitch` — compatibility redirect to `/deck`
+- `/pitch` — three-slide hackathon pitch
+- `/deck` — compatibility redirect to `/pitch`
 - `/privacy` — privacy notice
 - `/data-deletion` — data-deletion instructions
 

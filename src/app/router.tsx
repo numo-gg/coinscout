@@ -17,16 +17,16 @@ function Frame({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
 }
 
-function LegacyPitchRedirect() {
+function LegacyDeckRedirect() {
   const location = useLocation();
-  return <Navigate replace to={`/deck${location.search}${location.hash}`} />;
+  return <Navigate replace to={`/pitch${location.search}${location.hash}`} />;
 }
 
 export const router = createBrowserRouter([
-  { path: "/", element: <Frame><HomePage /></Frame> },
+  { path: "/", element: <HomePage /> },
   { path: "/scout", element: <Frame><Deferred><ScoutPage /></Deferred></Frame> },
-  { path: "/deck", element: <Frame><Deferred><PitchPage /></Deferred></Frame> },
-  { path: "/pitch", element: <LegacyPitchRedirect /> },
+  { path: "/pitch", element: <Frame><Deferred><PitchPage /></Deferred></Frame> },
+  { path: "/deck", element: <LegacyDeckRedirect /> },
   { path: "/privacy", element: <Frame><PrivacyPage /></Frame> },
   { path: "/data-deletion", element: <Frame><DataDeletionPage /></Frame> },
   { path: "*", element: <Frame><NotFoundPage /></Frame> },
