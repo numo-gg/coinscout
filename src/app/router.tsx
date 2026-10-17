@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import { AppShell } from "@/app/AppShell";
 import { HomePage } from "@/pages/HomePage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
@@ -17,10 +17,16 @@ function Frame({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
 }
 
+function LegacyPitchRedirect() {
+  const location = useLocation();
+  return <Navigate replace to={`/deck${location.search}${location.hash}`} />;
+}
+
 export const router = createBrowserRouter([
   { path: "/", element: <Frame><HomePage /></Frame> },
   { path: "/scout", element: <Frame><Deferred><ScoutPage /></Deferred></Frame> },
-  { path: "/pitch", element: <Frame><Deferred><PitchPage /></Deferred></Frame> },
+  { path: "/deck", element: <Frame><Deferred><PitchPage /></Deferred></Frame> },
+  { path: "/pitch", element: <LegacyPitchRedirect /> },
   { path: "/privacy", element: <Frame><PrivacyPage /></Frame> },
   { path: "/data-deletion", element: <Frame><DataDeletionPage /></Frame> },
   { path: "*", element: <Frame><NotFoundPage /></Frame> },
