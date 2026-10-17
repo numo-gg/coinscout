@@ -1,6 +1,6 @@
 # CoinScout / Atlas Scout
 
-Atlas Scout is a seller-controlled demo for turning a coin listing into cited, reviewable buyer prospects. AI may analyze approved listing text, research public sources, and draft copy; it never decides a price, sends a message, takes payment, reserves inventory, or creates a shipping label.
+Atlas Scout turns a seller-selected Instagram coin listing into cited, reviewable public research leads. The live product flow is: connect an authorized Instagram account, select one post, set a local-only price range, then search public sources. Research receives only the seller-selected caption; it never receives pricing rules, sends messages, takes payment, reserves inventory, or creates shipping labels.
 
 ## Run locally
 
@@ -14,7 +14,7 @@ npm run build
 ## Public routes
 
 - `/` — launch page
-- `/scout` — interactive Atlas Scout demo
+- `/scout` — interactive Atlas Scout listing-to-research flow
 - `/pitch` — static hackathon pitch
 - `/privacy` — privacy notice
 - `/data-deletion` — data-deletion instructions

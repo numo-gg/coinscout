@@ -9,7 +9,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="site-header">
         <Logo />
         <nav aria-label="Primary navigation">
-          <NavLink to="/scout">Scout demo</NavLink>
+          <NavLink to="/scout">Scout</NavLink>
           <NavLink to="/pitch">Pitch</NavLink>
         </nav>
       </header>

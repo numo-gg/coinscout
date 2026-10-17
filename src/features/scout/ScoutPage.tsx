@@ -1,528 +1,319 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Badge } from "@/shared/ui/Badge";
-import { Button } from "@/shared/ui/Button";
-import { DEMO_LISTING, DEMO_OUTREACH_DRAFT, DEMO_PROSPECTS } from "./fixtures";
-import { DEFAULT_MANDATE, formatUsd } from "./domain/policy";
-import { initialScoutState, scoutReducer } from "./domain/state";
-import type { Prospect, ScoutCommand } from "./domain/types";
+import { DEMO_LISTING, DEMO_PROSPECTS } from "./fixtures";
 import {
-  analyzeInstagramMedia,
-  draftApprovedOutreach,
   getInstagramConnection,
   researchApprovedListing,
   type InstagramConnection,
   type InstagramMediaOption,
-  type RemoteListingAnalysis,
-  type RemoteOutreachDraft,
+  type RemoteProspect,
 } from "./liveApi";
 import "./ScoutPage.css";
 
-const progressLabels = ["Listing", "Consent", "Facts", "Prospect", "Offer", "Receipt"];
-type ScoutAction = ScoutCommand extends infer Command
-  ? Command extends { id: string }
-    ? Omit<Command, "id">
-    : never
-  : never;
+type ProspectResult = {
+  confidence: "high" | "medium" | "low";
+  excerpt: string;
+  id: string;
+  name: string;
+  relevance: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  uncertainty: string;
+};
 
-function ConfidenceMark({ confidence }: { confidence: Prospect["confidence"] }) {
-  return <span className={`scout-confidence scout-confidence--${confidence}`}>{confidence} confidence</span>;
+const DEMO_POST: InstagramMediaOption = {
+  id: DEMO_LISTING.id,
+  caption: DEMO_LISTING.caption,
+  mediaType: "IMAGE",
+  permalink: "https://www.instagram.com/",
+};
+
+function sourceLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "Public source";
+  }
 }
 
-function confidenceLabel(value: number): Prospect["confidence"] {
+function confidenceLabel(value: number): ProspectResult["confidence"] {
   if (value >= 0.75) return "high";
   if (value >= 0.45) return "medium";
   return "low";
 }
 
-function toProspect(item: {
-  confidence: number;
-  evidenceExcerpt: string;
-  name: string;
-  relevance: string;
-  sourceUrl: string;
-  uncertainty: string;
-}, index: number): Prospect {
-  let sourceLabel = "Public source";
-  try { sourceLabel = new URL(item.sourceUrl).hostname.replace(/^www\./, ""); } catch { /* schema-rejected server responses are never shown */ }
+function mapRemoteProspect(prospect: RemoteProspect, index: number): ProspectResult {
   return {
-    id: `live-prospect-${index}`,
-    name: item.name,
-    organizationType: "public organization",
-    sourceUrl: item.sourceUrl,
-    sourceLabel,
-    excerpt: item.evidenceExcerpt,
-    relevance: item.relevance,
-    confidence: confidenceLabel(item.confidence),
-    uncertainty: item.uncertainty,
+    confidence: confidenceLabel(prospect.confidence),
+    excerpt: prospect.evidenceExcerpt,
+    id: `research-${index}-${prospect.name}`,
+    name: prospect.name,
+    relevance: prospect.relevance,
+    sourceLabel: sourceLabel(prospect.sourceUrl),
+    sourceUrl: prospect.sourceUrl,
+    uncertainty: prospect.uncertainty,
   };
 }
 
-function listingFacts(media: InstagramMediaOption | null, analysis: RemoteListingAnalysis | null) {
-  if (!media) return DEMO_LISTING;
-  const firstFact = analysis?.keyFacts.at(0) ?? "Seller confirmation required";
-  return {
-    id: media.id,
-    title: analysis?.title ?? "Role-authorized Instagram post",
-    caption: media.caption || "No caption was provided for this selected post.",
-    series: analysis?.denomination ?? "Unverified — seller review required",
-    year: analysis?.year ?? "Unverified",
-    grade: analysis?.conditionNotes.at(0) ?? "Unverified — seller review required",
-    certification: analysis?.variety ?? analysis?.mintMark ?? firstFact,
-    imageAlt: "Illustrated CoinScout marker for a selected role-authorized Instagram post",
-  };
+const demoProspects: ProspectResult[] = DEMO_PROSPECTS.map((prospect) => ({
+  confidence: prospect.confidence,
+  excerpt: prospect.excerpt,
+  id: prospect.id,
+  name: prospect.name,
+  relevance: prospect.relevance,
+  sourceLabel: prospect.sourceLabel,
+  sourceUrl: prospect.sourceUrl,
+  uncertainty: prospect.uncertainty,
+}));
+
+function moneyValue(value: string): number {
+  return Number(value.replace(/[$,\s]/g, ""));
+}
+
+function compactCaption(caption: string): string {
+  const normalized = caption.trim();
+  if (!normalized) return "This post has no seller-visible caption.";
+  return normalized.length > 180 ? `${normalized.slice(0, 177)}…` : normalized;
 }
 
 export function ScoutPage() {
   const [searchParams] = useSearchParams();
-  const [state, dispatch] = useReducer(scoutReducer, initialScoutState);
-  const [offerInput, setOfferInput] = useState("$510");
-  const [inventoryTitle, setInventoryTitle] = useState("");
-  const [inventoryDescription, setInventoryDescription] = useState("");
-  const [inventorySubmitted, setInventorySubmitted] = useState(false);
-  const [criteria, setCriteria] = useState({ ask: "$550", rangeHigh: "$550", rangeLow: "$500", hardPrice: "$525" });
-  const [criteriaSaved, setCriteriaSaved] = useState(false);
-  const [instagramConnection, setInstagramConnection] = useState<InstagramConnection | null>(null);
-  const [liveListing, setLiveListing] = useState<InstagramMediaOption | null>(null);
-  const [liveAnalysis, setLiveAnalysis] = useState<RemoteListingAnalysis | null>(null);
-  const [liveProspects, setLiveProspects] = useState<Prospect[] | null>(null);
-  const [liveDraft, setLiveDraft] = useState<RemoteOutreachDraft | null>(null);
-  const [liveStatus, setLiveStatus] = useState("");
-  const [liveBusy, setLiveBusy] = useState<"analysis" | "research" | "draft" | null>(null);
-  const isInstagramListing = Boolean(liveListing);
-  const activeListing = listingFacts(liveListing, liveAnalysis);
-  const visibleListingTitle = !isInstagramListing && inventorySubmitted && inventoryTitle.trim()
-    ? inventoryTitle.trim()
-    : activeListing.title;
-  const visibleListingCaption = !isInstagramListing && inventorySubmitted && inventoryDescription.trim()
-    ? inventoryDescription.trim()
-    : activeListing.caption;
-  const prospects = isInstagramListing ? (liveProspects ?? []) : DEMO_PROSPECTS;
-  const selectedProspect = prospects.find((prospect) => prospect.id === state.selectedProspectId);
-  const counter = state.lastDecision?.kind === "counter" ? state.lastDecision : null;
-  const currentProgress = [
-    Boolean(state.selectedListingId),
-    state.aiOptedIn,
-    state.factsConfirmed,
-    Boolean(state.selectedProspectId && state.outreachApproved),
-    Boolean(state.lastDecision),
-    state.labelSimulated,
-  ];
-
-  const command = (id: string, action: ScoutAction) => dispatch({ ...action, id } as ScoutCommand);
+  const [connection, setConnection] = useState<InstagramConnection | null>(null);
+  const [connectionLoading, setConnectionLoading] = useState(true);
+  const [selectedPost, setSelectedPost] = useState<InstagramMediaOption | null>(null);
+  const [ask, setAsk] = useState("550");
+  const [floor, setFloor] = useState("500");
+  const [results, setResults] = useState<ProspectResult[] | null>(null);
+  const [researching, setResearching] = useState(false);
+  const [resultsAreFixture, setResultsAreFixture] = useState(false);
+  const [status, setStatus] = useState("");
 
   useEffect(() => {
-    if (searchParams.get("instagram") !== "connected") return;
     let active = true;
-    void getInstagramConnection().then((connection) => {
-      if (!active) return;
-      setInstagramConnection(connection);
-      setLiveStatus(connection?.connected
-        ? `Connected as @${connection.profile?.username ?? "authorized test account"}. Select one post below.`
-        : "The Instagram session is unavailable or expired. Reconnect before selecting a post.");
-    });
-    return () => { active = false; };
-  }, [searchParams]);
+    void getInstagramConnection()
+      .then((session) => {
+        if (!active) return;
+        setConnection(session);
+        if (session?.connected) {
+          setStatus(`Connected as @${session.profile?.username ?? "authorized account"}. Choose one post to search.`);
+        }
+      })
+      .finally(() => {
+        if (active) setConnectionLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const selectInstagramMedia = (media: InstagramMediaOption) => {
-    setLiveListing(media);
-    setLiveAnalysis(null);
-    setLiveProspects(null);
-    setLiveDraft(null);
-    setLiveStatus("Selected post is ready for seller-approved analysis.");
-    command(`listing:instagram:${media.id}`, { type: "select_listing", listingId: media.id, source: "instagram" });
-  };
+  const hasConnectedInstagram = connection?.connected === true;
+  const posts = useMemo(
+    () => (hasConnectedInstagram ? connection?.media ?? [] : [DEMO_POST]),
+    [connection?.media, hasConnectedInstagram],
+  );
+  const askValue = moneyValue(ask);
+  const floorValue = moneyValue(floor);
+  const validRange = Number.isFinite(askValue)
+    && Number.isFinite(floorValue)
+    && askValue > 0
+    && floorValue >= 0
+    && askValue >= floorValue;
+  const instagramDenied = searchParams.get("instagram") === "denied";
 
-  const approveAnalysis = () => {
-    command("analysis:opt-in", { type: "opt_in_ai" });
-    if (!liveListing) return;
-    setLiveBusy("analysis");
-    setLiveStatus("Analyzing only the selected post’s server-fetched content…");
-    void analyzeInstagramMedia(liveListing.id).then((result) => {
-      if (result?.analysis) {
-        setLiveAnalysis(result.analysis);
-        setLiveStatus("Analysis is ready for seller confirmation. Uncertainties remain visible.");
+  function selectPost(post: InstagramMediaOption) {
+    setSelectedPost(post);
+    setResults(null);
+    setResultsAreFixture(false);
+    setStatus(`${hasConnectedInstagram ? "Post" : "Demo post"} selected. Set your range, then search public sources.`);
+  }
+
+  function searchProspects() {
+    if (!selectedPost) {
+      setStatus("Choose one Instagram post before starting a search.");
+      return;
+    }
+    if (!validRange) {
+      setStatus("Enter a valid range: asking price must be at least the floor.");
+      return;
+    }
+    if (!selectedPost.caption.trim()) {
+      setStatus("Choose a post with a seller-visible caption before starting a search.");
+      return;
+    }
+
+    setResearching(true);
+    setResults(null);
+    setStatus("Searching up to three public sources for cited research leads…");
+
+    // The selected caption is the sole client-supplied model input. Seller pricing stays local.
+    void researchApprovedListing(selectedPost.caption.trim()).then((response) => {
+      if (response?.research?.prospects?.length) {
+        setResults(response.research.prospects.map(mapRemoteProspect));
+        setResultsAreFixture(response.mode === "fixture");
+        setStatus(response.mode === "fixture"
+          ? "Demo research leads are ready. Review their public citations."
+          : "Cited research leads are ready. Review their public citations.");
       } else {
-        setLiveStatus("Analysis could not be completed. Pause and review the selected post; no sale action occurred.");
+        setResults(demoProspects);
+        setResultsAreFixture(true);
+        setStatus(response
+          ? "Research needs seller review, so compact demo citations are shown for this walkthrough."
+          : "Live research is unavailable, so compact demo citations are shown for this walkthrough.");
       }
-      setLiveBusy(null);
+      setResearching(false);
     });
-  };
-
-  const confirmFacts = () => {
-    command("facts:confirm", { type: "confirm_facts" });
-    if (!liveListing) return;
-    setLiveBusy("research");
-    setLiveStatus("Researching up to three public, cited organizations…");
-    void researchApprovedListing(activeListing.caption).then((result) => {
-      if (result?.research?.prospects?.length) {
-        setLiveProspects(result.research.prospects.map(toProspect));
-        setLiveStatus("Cited research is ready for seller selection.");
-      } else {
-        setLiveProspects([]);
-        setLiveStatus("No citable prospect result is available. Seller review is required.");
-      }
-      setLiveBusy(null);
-    });
-  };
-
-  const selectProspect = (prospect: Prospect) => {
-    command(`prospect:${prospect.id}`, { type: "select_prospect", prospectId: prospect.id });
-    if (!liveListing) return;
-    setLiveBusy("draft");
-    setLiveStatus("Drafting a seller-review-only simulated note…");
-    void draftApprovedOutreach(activeListing.caption, prospect).then((result) => {
-      if (result?.draft) {
-        setLiveDraft(result.draft);
-        setLiveStatus("Draft ready for seller review. It contains no price or payment terms.");
-      } else {
-        setLiveStatus("A safe draft could not be produced. Seller review is required.");
-      }
-      setLiveBusy(null);
-    });
-  };
+  }
 
   return (
-    <div className="scout page-width">
-      <section className="scout__masthead" aria-labelledby="scout-title">
-        <div>
-          <Badge tone="brass">ATLAS SCOUT / CONTROLLED DEMO</Badge>
-          <p className="eyebrow">A seller-guided, fixture-safe workflow</p>
-          <h1 id="scout-title">A buyer path with the guardrails in view.</h1>
-          <p className="scout__lede">Walk one graded coin from listing through a simulated, seller-controlled sale. The model boundary is visible; pricing and commitments stay deterministic.</p>
-        </div>
-        <aside className="scout__boundary" aria-label="Demo safety boundary">
-          <span className="scout__boundary-mark" aria-hidden="true">◎</span>
-          <div>
-            <strong>Simulation is on</strong>
-            <p>No DMs, payments, labels, listings, or inventory systems are touched by this demo.</p>
+    <main className="scout" aria-labelledby="scout-title">
+      <div className="scout-shell">
+        <header className="scout-topbar">
+          <a className="scout-secondary scout-topbar__brand" href="/" aria-label="CoinScout home">
+            <span aria-hidden="true">◉</span> CoinScout
+          </a>
+          <span className="scout-topbar__tag">Atlas Scout</span>
+        </header>
+
+        <section className="scout-flow">
+          <div className="scout-flow__intro">
+            <p className="scout-note">Collector market research</p>
+            <h1 id="scout-title">Select a listing. Set your range. Find leads.</h1>
+            <p>CoinScout searches cited public sources for relevant collector-market research. It never messages anyone or commits inventory.</p>
           </div>
-        </aside>
-      </section>
 
-      <ol className="scout-progress" aria-label="Demo progress">
-        {progressLabels.map((label, index) => (
-          <li className={currentProgress[index] ? "is-complete" : ""} key={label}>
-            <span aria-hidden="true">{currentProgress[index] ? "✓" : index + 1}</span>{label}
-          </li>
-        ))}
-      </ol>
-
-      <div className="scout-layout">
-        <div className="scout-workflow">
-          <article className={`scout-card ${state.selectedListingId ? "is-complete" : ""}`}>
-            <div className="scout-card__heading">
-              <span className="scout-step">01</span>
-              <div>
-                <p className="eyebrow">Listing intake</p>
-                <h2>Choose one listing</h2>
-              </div>
-              {state.selectedListingId && <Badge tone="safe">Selected</Badge>}
-            </div>
-            <form
-              aria-label="Seller inventory intake"
-              onSubmit={(event) => {
-                event.preventDefault();
-                setInventorySubmitted(true);
-              }}
-              style={{
-                display: "grid",
-                gap: ".7rem",
-                margin: "0 0 1rem",
-                padding: "1rem",
-                border: "1px solid rgba(110, 181, 139, .42)",
-                background: "linear-gradient(135deg, #0d211c, #153329)",
-                color: "#edf7ef",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "baseline", flexWrap: "wrap" }}>
+          <section className="scout-step" aria-labelledby="sign-in-title">
+            <div className="scout-step__number" aria-hidden="true">01</div>
+            <div className="scout-panel">
+              <div className="scout-panel__heading">
                 <div>
-                  <p className="eyebrow" style={{ color: "#a9dfba" }}>Seller inventory</p>
-                  <strong style={{ fontFamily: "var(--display)", fontSize: "1.15rem" }}>Send one item into the local demo</strong>
+                  <p className="scout-note">Instagram</p>
+                  <h2 id="sign-in-title">Sign in with Instagram</h2>
                 </div>
-                {inventorySubmitted && <span style={{ color: "#b6e8c4", fontSize: ".73rem", fontWeight: 800 }}>SAVED FOR THIS SESSION</span>}
+                {hasConnectedInstagram && <span className="scout-step__state">Connected</span>}
               </div>
-              <label style={{ display: "grid", gap: ".35rem", fontSize: ".78rem", fontWeight: 700 }}>
-                Item title <span style={{ color: "#b8d0bf", fontWeight: 400 }}>(optional)</span>
-                <input
-                  value={inventoryTitle}
-                  onChange={(event) => { setInventoryTitle(event.target.value); setInventorySubmitted(false); }}
-                  placeholder="1921 Peace Dollar · PCGS MS63"
-                  style={{ width: "100%", border: "1px solid rgba(255,255,255,.22)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".65rem .75rem" }}
-                />
-              </label>
-              <label style={{ display: "grid", gap: ".35rem", fontSize: ".78rem", fontWeight: 700 }}>
-                Seller notes <span style={{ color: "#b8d0bf", fontWeight: 400 }}>(optional)</span>
-                <textarea
-                  value={inventoryDescription}
-                  onChange={(event) => { setInventoryDescription(event.target.value); setInventorySubmitted(false); }}
-                  placeholder="Condition, certification, or a short listing note"
-                  rows={2}
-                  style={{ width: "100%", resize: "vertical", border: "1px solid rgba(255,255,255,.22)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".65rem .75rem" }}
-                />
-              </label>
-              <div style={{ display: "flex", gap: ".75rem", alignItems: "center", flexWrap: "wrap" }}>
-                <Button type="submit" variant="secondary" style={{ color: "#eff9f1", borderColor: "#9ed5ad" }}>Save inventory</Button>
-                <small style={{ color: "#b8d0bf", lineHeight: 1.4 }}>Local demo only — nothing is posted, messaged, or shared.</small>
-              </div>
-            </form>
-            <div className="scout-live-import">
-              <div>
-                <p className="scout-live-import__eyebrow">Optional live import</p>
-                <p>Instagram Login is limited to a Meta role-authorized Business or Creator test account. Tokens stay server-side and the public launch stays fixture-safe.</p>
-              </div>
-              {!instagramConnection?.connected && !state.selectedListingId && <a className="button button--secondary" href="/api/instagram/start">Connect authorized Instagram</a>}
+              <p>Connect the Business or Creator account that owns the listing you want to search.</p>
+              {connectionLoading ? (
+                <p className="scout-status" role="status">Checking your Instagram session…</p>
+              ) : hasConnectedInstagram ? (
+                <p className="scout-status" role="status">@{connection?.profile?.username ?? "authorized account"} is ready.</p>
+              ) : (
+                <div className="scout-panel__actions">
+                  <a className="scout-primary" href="/api/instagram/start">Connect Instagram</a>
+                  <p className="scout-note">Instagram Login is limited to Meta role-authorized Business or Creator test accounts for now.</p>
+                </div>
+              )}
+              {instagramDenied && <p className="scout-status scout-status--warning" role="status">Instagram sign-in did not complete. No session was created.</p>}
             </div>
-            {searchParams.get("instagram") === "fixture" && <p className="scout-live-status">Instagram import is deliberately unavailable in fixture mode.</p>}
-            {searchParams.get("instagram") === "denied" && <p className="scout-live-status scout-live-status--warning">Instagram authorization did not complete. No session was created.</p>}
-            {liveStatus && <p className="scout-live-status" role="status">{liveStatus}</p>}
-            {instagramConnection?.connected && !state.selectedListingId && (
-              <div className="scout-media-picker" aria-label="Role-authorized Instagram posts">
-                {instagramConnection.media?.length ? instagramConnection.media.map((media) => (
-                  <article key={media.id}>
-                    <p><b>{media.mediaType.replace("_", " ")}</b> · seller-visible metadata only</p>
-                    <span>{media.caption || "No caption available"}</span>
-                    <a href={media.permalink} target="_blank" rel="noreferrer">Open public post <span aria-hidden="true">↗</span></a>
-                    <Button type="button" onClick={() => selectInstagramMedia(media)}>Use this authorized post</Button>
-                  </article>
-                )) : <p className="scout-live-status scout-live-status--warning">Connected, but no eligible image post is available for this short demo session.</p>}
-              </div>
-            )}
-            <div className="scout-listing">
-              <div className="scout-coin" aria-label={activeListing.imageAlt} role="img">
-                <span>{isInstagramListing ? "LIVE" : "1921"}</span><b>{isInstagramListing ? "IG" : "AS"}</b><small>{isInstagramListing ? "POST" : "PEACE"}</small>
-              </div>
-              <div>
-                <h3>{visibleListingTitle}</h3>
-                <p>{visibleListingCaption}</p>
-                {!state.selectedListingId ? (
-                  <Button type="button" onClick={() => command("listing:demo", { type: "select_listing", listingId: DEMO_LISTING.id, source: "demo" })}>
-                    {inventorySubmitted ? "Use submitted inventory" : "Use this demo listing"} <span aria-hidden="true">→</span>
-                  </Button>
-                ) : <p className="scout-card__confirmation">{isInstagramListing ? "Authorized post locked for this short, server-side session." : "Demo listing locked for this local walkthrough."}</p>}
-              </div>
-            </div>
-          </article>
+          </section>
 
-          <article className={`scout-card ${state.aiOptedIn ? "is-complete" : ""}`} aria-disabled={!state.selectedListingId}>
-            <div className="scout-card__heading">
-              <span className="scout-step">02</span>
-              <div>
-                <p className="eyebrow">Explicit consent</p>
-                <h2>Approve listing analysis</h2>
+          <section className="scout-step" aria-labelledby="post-title">
+            <div className="scout-step__number" aria-hidden="true">02</div>
+            <div className="scout-panel">
+              <div className="scout-panel__heading">
+                <div>
+                  <p className="scout-note">Your inventory</p>
+                  <h2 id="post-title">Select a post</h2>
+                </div>
+                {!hasConnectedInstagram && !connectionLoading && <span className="scout-step__state">Demo mode</span>}
               </div>
-              {state.aiOptedIn && <Badge tone="safe">Approved</Badge>}
+              {hasConnectedInstagram && posts.length === 0 ? (
+                <div className="scout-empty">No eligible posts are available in this authorized session. Choose another post in Instagram, then reconnect.</div>
+              ) : (
+                <div className="scout-posts" aria-label="Instagram posts">
+                  {posts.map((post) => {
+                    const selected = selectedPost?.id === post.id;
+                    return (
+                      <article className={`scout-post ${selected ? "scout-post--selected" : ""}`} key={post.id}>
+                        <div className="scout-post__meta">
+                          <span>{post.mediaType.replace(/_/g, " ")}</span>
+                          {!hasConnectedInstagram && <span>Demo listing</span>}
+                        </div>
+                        <p>{compactCaption(post.caption)}</p>
+                        <div className="scout-post__actions">
+                          <button className={selected ? "scout-primary" : "scout-secondary"} type="button" aria-pressed={selected} onClick={() => selectPost(post)}>
+                            {selected ? "Selected" : "Select post"}
+                          </button>
+                          {hasConnectedInstagram && post.permalink && <a className="scout-secondary" href={post.permalink} target="_blank" rel="noreferrer">View post ↗</a>}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+              {!hasConnectedInstagram && !connectionLoading && <p className="scout-note">A single demo post is available while an authorized Instagram session is not connected.</p>}
             </div>
-            <div className="scout-consent">
-              <div className="scout-consent__check" aria-hidden="true">{state.aiOptedIn ? "✓" : "○"}</div>
-              <p><strong>Only seller-approved caption text and image bytes may be processed.</strong> Tokens, contacts, payment details, private floor rules, and cookies stay outside the model boundary. This walkthrough uses a local fixture and makes no request.</p>
-            </div>
-            {!state.aiOptedIn && <Button type="button" variant="secondary" disabled={!state.selectedListingId || liveBusy === "analysis"} onClick={approveAnalysis}>{liveBusy === "analysis" ? "Analyzing selected post…" : isInstagramListing ? "I approve selected-post analysis" : "I approve fixture analysis"}</Button>}
-          </article>
+          </section>
 
-          <article className={`scout-card ${state.factsConfirmed ? "is-complete" : ""}`} aria-disabled={!state.aiOptedIn}>
-            <div className="scout-card__heading">
-              <span className="scout-step">03</span>
-              <div>
-                <p className="eyebrow">Seller confirmation</p>
-                <h2>Confirm extracted facts</h2>
+          <section className="scout-step" aria-labelledby="range-title">
+            <div className="scout-step__number" aria-hidden="true">03</div>
+            <div className="scout-panel">
+              <div className="scout-panel__heading">
+                <div>
+                  <p className="scout-note">Seller criteria</p>
+                  <h2 id="range-title">Set your range</h2>
+                </div>
+                <span className="scout-step__state">Local only</span>
               </div>
-              {state.factsConfirmed && <Badge tone="safe">Confirmed</Badge>}
+              <div className="scout-range">
+                <label>
+                  <span>Asking price</span>
+                  <div><b aria-hidden="true">$</b><input value={ask} onChange={(event) => setAsk(event.target.value)} inputMode="decimal" aria-label="Asking price" aria-invalid={ask !== "" && !Number.isFinite(askValue)} /></div>
+                </label>
+                <span className="scout-range__connector" aria-hidden="true">to</span>
+                <label>
+                  <span>Range floor</span>
+                  <div><b aria-hidden="true">$</b><input value={floor} onChange={(event) => setFloor(event.target.value)} inputMode="decimal" aria-label="Range floor" aria-invalid={floor !== "" && !Number.isFinite(floorValue)} /></div>
+                </label>
+                <div className="scout-range__autoclose"><span>Auto-close</span><strong>$525</strong></div>
+              </div>
+              {!validRange && <p className="scout-status scout-status--warning" role="alert">The asking price must be at least the floor.</p>}
+              <p className="scout-note">Your range stays in this browser. It is never sent with the search request.</p>
             </div>
-            <dl className="scout-facts">
-              <div><dt>Series</dt><dd>{activeListing.series}</dd></div>
-              <div><dt>Year</dt><dd>{activeListing.year}</dd></div>
-              <div><dt>Grade</dt><dd>{activeListing.grade}</dd></div>
-              <div><dt>Certification</dt><dd>{activeListing.certification}</dd></div>
-            </dl>
-            {!state.factsConfirmed && <Button type="button" disabled={!state.aiOptedIn || liveBusy === "analysis" || liveBusy === "research"} onClick={confirmFacts}>{liveBusy === "research" ? "Researching public sources…" : "Confirm these facts"}</Button>}
-          </article>
+          </section>
 
-          <article className={`scout-card scout-card--mandate ${state.factsConfirmed ? "is-ready" : ""}`} aria-disabled={!state.factsConfirmed}>
-            <div className="scout-card__heading">
-              <span className="scout-step">04</span>
-              <div>
-                <p className="eyebrow">Pure negotiation policy</p>
-                <h2>Set the shipped-price mandate</h2>
+          <section className="scout-step" aria-labelledby="search-title">
+            <div className="scout-step__number" aria-hidden="true">04</div>
+            <div className="scout-panel">
+              <div className="scout-panel__heading">
+                <div>
+                  <p className="scout-note">Public market research</p>
+                  <h2 id="search-title">Search on your behalf</h2>
+                </div>
               </div>
-              <Badge tone="warning">Never model-decided</Badge>
-            </div>
-            <form
-              aria-label="Seller price criteria"
-              onSubmit={(event) => {
-                event.preventDefault();
-                setCriteriaSaved(true);
-              }}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-                gap: ".65rem",
-                margin: "0 0 1rem",
-                padding: ".9rem",
-                border: "1px solid rgba(35,112,90,.45)",
-                background: "#10271f",
-                color: "#eff8ef",
-              }}
-            >
-              <label style={{ display: "grid", gap: ".3rem", fontSize: ".72rem", fontWeight: 800 }}>
-                Asking price
-                <input value={criteria.ask} inputMode="decimal" onChange={(event) => { setCriteria({ ...criteria, ask: event.target.value }); setCriteriaSaved(false); }} style={{ minWidth: 0, border: "1px solid rgba(255,255,255,.24)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".56rem" }} />
-              </label>
-              <label style={{ display: "grid", gap: ".3rem", fontSize: ".72rem", fontWeight: 800 }}>
-                Range high
-                <input value={criteria.rangeHigh} inputMode="decimal" onChange={(event) => { setCriteria({ ...criteria, rangeHigh: event.target.value }); setCriteriaSaved(false); }} style={{ minWidth: 0, border: "1px solid rgba(255,255,255,.24)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".56rem" }} />
-              </label>
-              <label style={{ display: "grid", gap: ".3rem", fontSize: ".72rem", fontWeight: 800 }}>
-                Range low
-                <input value={criteria.rangeLow} inputMode="decimal" onChange={(event) => { setCriteria({ ...criteria, rangeLow: event.target.value }); setCriteriaSaved(false); }} style={{ minWidth: 0, border: "1px solid rgba(255,255,255,.24)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".56rem" }} />
-              </label>
-              <label style={{ display: "grid", gap: ".3rem", fontSize: ".72rem", fontWeight: 800 }}>
-                Hard price
-                <input value={criteria.hardPrice} inputMode="decimal" onChange={(event) => { setCriteria({ ...criteria, hardPrice: event.target.value }); setCriteriaSaved(false); }} style={{ minWidth: 0, border: "1px solid rgba(255,255,255,.24)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".56rem" }} />
-              </label>
-              <div style={{ gridColumn: "1 / -1", display: "flex", gap: ".7rem", alignItems: "center", flexWrap: "wrap" }}>
-                <Button type="submit" variant="secondary" disabled={!state.factsConfirmed || state.reserved} style={{ color: "#eff8ef", borderColor: "#9ed5ad" }}>Save criteria</Button>
-                <small aria-live="polite" style={{ color: "#b8d0bf", lineHeight: 1.4 }}>{criteriaSaved ? "Seller criteria saved locally. Deterministic offer decisions remain locked to the verified demo policy." : "Ask $550 · range $550–$500 · hard price $525."}</small>
-              </div>
-            </form>
-            <div className="scout-mandate" aria-label="Seller pricing mandate">
-              <div><span>Ask</span><strong>{criteria.ask}</strong><small>seller-visible</small></div>
-              <div><span>Hard price</span><strong>{criteria.hardPrice}</strong><small>auto-accept</small></div>
-              <div className="scout-mandate__private"><span>Range floor</span><strong>{criteria.rangeLow}</strong><small>seller only</small></div>
-            </div>
-            <div className="scout-ladder" aria-label="Bounded counter ladder">
-              <span>Seller range {criteria.rangeHigh} → {criteria.rangeLow}</span>
-              {DEFAULT_MANDATE.counterLadderCents.map((amount, index) => <strong key={amount}>{formatUsd(amount)}{index < 2 && <i aria-hidden="true">→</i>}</strong>)}
-            </div>
-            <label className="scout-floor-control">
-              <input type="checkbox" disabled={!state.factsConfirmed || state.reserved} checked={state.floorAuthorityEnabled} onChange={(event) => command(`floor-authority:${event.target.checked}`, { type: "set_floor_authority", enabled: event.target.checked })} />
-              <span>Allow the final {formatUsd(DEFAULT_MANDATE.privateFloorCents)} rung only after explicit seller authority.</span>
-            </label>
-            <p className="scout-private-note">This rule remains in local sale policy. It is never included in an AI analysis or outreach prompt.</p>
-          </article>
+              <p>CoinScout uses only the selected post’s caption to find up to three cited public research leads.</p>
+              <button className="scout-primary" type="button" disabled={!selectedPost || !validRange || researching} onClick={searchProspects}>
+                {researching ? "Searching public sources…" : "Find collector-market leads"}
+              </button>
+              <p className="scout-note">Search only — it will not message anyone, send an offer, or reserve your item.</p>
 
-          <article className={`scout-card ${state.selectedProspectId ? "is-complete" : ""}`} aria-disabled={!state.factsConfirmed}>
-            <div className="scout-card__heading">
-              <span className="scout-step">05</span>
-              <div>
-                <p className="eyebrow">Public-source research</p>
-                <h2>Choose one cited organization</h2>
-              </div>
-              {state.selectedProspectId && <Badge tone="safe">1 selected</Badge>}
-            </div>
-            <p className="scout-card__note">Demo fixture: each prospect is a public organization, not a claim that it wants to buy this coin.</p>
-            <div className="scout-prospects">
-              {prospects.map((prospect) => {
-                const selected = state.selectedProspectId === prospect.id;
-                return (
-                  <article className={`scout-prospect ${selected ? "is-selected" : ""}`} key={prospect.id}>
-                    <div className="scout-prospect__top">
-                      <div><p>{prospect.organizationType}</p><h3>{prospect.name}</h3></div>
-                      <ConfidenceMark confidence={prospect.confidence} />
-                    </div>
-                    <p>{prospect.relevance}</p>
-                    <blockquote>“{prospect.excerpt}”</blockquote>
-                    <a href={prospect.sourceUrl} target="_blank" rel="noreferrer">{prospect.sourceLabel} <span aria-hidden="true">↗</span></a>
-                    <small><b>Uncertainty:</b> {prospect.uncertainty}</small>
-                    <Button type="button" variant={selected ? "primary" : "secondary"} disabled={!state.factsConfirmed || liveBusy === "research" || liveBusy === "draft"} aria-pressed={selected} onClick={() => selectProspect(prospect)}>{selected ? "Selected for draft" : "Select prospect"}</Button>
-                  </article>
-                );
-              })}
-              {isInstagramListing && state.factsConfirmed && liveBusy === "research" && <p className="scout-live-status">Checking bounded public sources…</p>}
-              {isInstagramListing && state.factsConfirmed && liveBusy !== "research" && prospects.length === 0 && <p className="scout-live-status scout-live-status--warning">No cited public prospect is available. The workflow stays paused for seller review.</p>}
-            </div>
-          </article>
+              {status && <p className="scout-status" role="status">{status}</p>}
 
-          <article className={`scout-card ${state.outreachApproved ? "is-complete" : ""}`} aria-disabled={!selectedProspect}>
-            <div className="scout-card__heading">
-              <span className="scout-step">06</span>
-              <div>
-                <p className="eyebrow">Seller review</p>
-                <h2>Approve simulated outreach</h2>
-              </div>
-              {state.outreachApproved && <Badge tone="safe">Approved</Badge>}
+              {results && (
+                <div className="scout-results" aria-live="polite">
+                  <div className="scout-results__heading">
+                    <h3>{resultsAreFixture ? "Demo cited leads" : "Cited research leads"}</h3>
+                    <p>These are research leads, not claims that anyone wants to buy this item.</p>
+                  </div>
+                  {results.map((prospect) => (
+                    <article className="scout-result" key={prospect.id}>
+                      <div className="scout-result__heading">
+                        <div>
+                          <h4>{prospect.name}</h4>
+                          <p>{prospect.relevance}</p>
+                        </div>
+                        <span className={`scout-result__confidence scout-result__confidence--${prospect.confidence}`}>{prospect.confidence} confidence</span>
+                      </div>
+                      <blockquote>“{prospect.excerpt}”</blockquote>
+                      <a href={prospect.sourceUrl} target="_blank" rel="noreferrer">{prospect.sourceLabel} ↗</a>
+                      <p className="scout-note"><strong>Uncertainty:</strong> {prospect.uncertainty}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="scout-draft">
-              <div className="scout-draft__to">To: {selectedProspect?.name ?? "Choose an organization first"}</div>
-              {liveDraft?.subject && <p className="scout-draft__subject">{liveDraft.subject}</p>}
-              <p>{liveDraft?.body ?? (isInstagramListing ? "A safe seller-review draft will appear only after the selected organization has a valid, cited result." : DEMO_OUTREACH_DRAFT)}</p>
-              <small>Drafting may summarize public facts; it cannot choose a price, send a message, or represent acceptance.</small>
-            </div>
-            {!state.outreachApproved && <Button type="button" disabled={!selectedProspect || (isInstagramListing && (!liveDraft || liveBusy === "draft"))} onClick={() => command("outreach:approve", { type: "approve_outreach" })}>{liveBusy === "draft" ? "Drafting…" : "Approve simulated draft"}</Button>}
-            {state.outreachApproved && <p className="scout-card__confirmation">Approved for simulation only — no message was sent.</p>}
-          </article>
-
-          <article className={`scout-card ${state.lastDecision ? "is-complete" : ""}`} aria-disabled={!state.outreachApproved}>
-            <div className="scout-card__heading">
-              <span className="scout-step">07</span>
-              <div>
-                <p className="eyebrow">Deterministic decision</p>
-                <h2>Evaluate a buyer offer</h2>
-              </div>
-              <Badge tone="warning">Policy only</Badge>
-            </div>
-            <form className="scout-offer-form" onSubmit={(event) => {
-              event.preventDefault();
-              command(`offer:${offerInput.trim()}:${state.events.length}`, { type: "evaluate_offer", rawOffer: offerInput });
-            }}>
-              <label htmlFor="scout-offer">Clean USD offer <span>no shipping or payment terms</span></label>
-              <div>
-                <input id="scout-offer" value={offerInput} onChange={(event) => setOfferInput(event.target.value)} disabled={!state.outreachApproved || state.reserved} inputMode="decimal" aria-describedby="scout-offer-help" />
-                <Button type="submit" disabled={!state.outreachApproved || state.reserved}>Run policy</Button>
-              </div>
-              <p id="scout-offer-help"><button type="button" disabled={!state.outreachApproved || state.reserved} onClick={() => setOfferInput("$510")}>Load $510 demo</button> <button type="button" disabled={!state.outreachApproved || state.reserved} onClick={() => setOfferInput("$525")}>Load $525 threshold</button></p>
-            </form>
-
-            {state.lastDecision && <div className={`scout-decision scout-decision--${state.lastDecision.kind}`} role="status">
-              <span className="scout-decision__label">{state.lastDecision.kind === "counter" ? "SIMULATED COUNTER" : state.lastDecision.kind === "accept" ? "SELLER REVIEW" : "REVIEW REQUIRED"}</span>
-              {state.lastDecision.kind === "counter" && <h3>{formatUsd(state.lastDecision.offerCents)} becomes {formatUsd(state.lastDecision.responseCents)} shipped.</h3>}
-              {state.lastDecision.kind === "accept" && <h3>{formatUsd(state.lastDecision.responseCents)} meets the mandate.</h3>}
-              {state.lastDecision.kind === "review" && <h3>Pause the automated path.</h3>}
-              <p>{state.lastDecision.reason}</p>
-              {counter && !state.reserved && <Button type="button" onClick={() => command(`counter:accept:${counter.responseCents}`, { type: "buyer_accepts_counter" })}>Simulate buyer accepting {formatUsd(counter.responseCents)}</Button>}
-            </div>}
-          </article>
-
-          <article className={`scout-card scout-card--settlement ${state.labelSimulated ? "is-complete" : ""}`} aria-disabled={!state.reserved}>
-            <div className="scout-card__heading">
-              <span className="scout-step">08</span>
-              <div>
-                <p className="eyebrow">Simulated settlement</p>
-                <h2>Reserve, pay, label, receipt</h2>
-              </div>
-              {state.labelSimulated && <Badge tone="safe">Receipt ready</Badge>}
-            </div>
-            <div className="scout-settlement">
-              <div className={state.reserved ? "is-done" : ""}><b>1</b><span>Reserve item</span><small>{state.reserved ? "Simulated reservation" : "Waiting on buyer acceptance"}</small></div>
-              <div className={state.paymentSimulated ? "is-done" : ""}><b>2</b><span>Confirm payment</span><small>{state.paymentSimulated ? "Simulated payment" : "No processor connected"}</small></div>
-              <div className={state.labelSimulated ? "is-done" : ""}><b>3</b><span>Unlock label</span><small>{state.labelSimulated ? "Simulated label" : "No carrier connected"}</small></div>
-            </div>
-            <div className="button-row">
-              {!state.paymentSimulated && <Button type="button" disabled={!state.reserved} onClick={() => command("payment:simulate", { type: "simulate_payment" })}>Simulate payment</Button>}
-              {!state.labelSimulated && <Button type="button" variant="secondary" disabled={!state.paymentSimulated} onClick={() => command("label:simulate", { type: "simulate_label" })}>Simulate shipping label</Button>}
-            </div>
-            {state.labelSimulated && <div className="scout-receipt">
-              <div><Badge tone="safe">SIMULATED AUDIT RECEIPT</Badge><strong>ATLAS-DEMO-1921-063</strong></div>
-              <p>One local walkthrough · {state.events.length} append-only events · no external record created.</p>
-            </div>}
-          </article>
-        </div>
-
-        <aside className="scout-audit" aria-labelledby="audit-title">
-          <div className="scout-audit__head">
-            <div><p className="eyebrow">Local demo ledger</p><h2 id="audit-title">Decision receipt</h2></div>
-            <button type="button" onClick={() => { dispatch({ id: "demo:restart", type: "restart_demo" }); setOfferInput("$510"); setLiveListing(null); setLiveAnalysis(null); setLiveProspects(null); setLiveDraft(null); setLiveStatus(""); }}>Restart</button>
-          </div>
-          <p>Every material action becomes a compact, simulated audit event. Replayed command IDs are ignored.</p>
-          {state.events.length === 0 ? <div className="scout-audit__empty">Start with the demo listing to create a local trail.</div> : <ol>
-            {state.events.map((event) => <li key={event.id}><span>{String(event.sequence).padStart(2, "0")}</span><div><b>{event.kind.replace(".", " · ")}</b><p>{event.summary}</p></div></li>)}
-          </ol>}
-          <div className="scout-audit__rules">
-            <strong>Hard boundaries</strong>
-            <ul><li>Prices come from pure policy.</li><li>Outreach never sends itself.</li><li>Payment precedes a simulated label.</li></ul>
-          </div>
-        </aside>
+          </section>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

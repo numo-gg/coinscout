@@ -30,6 +30,11 @@
   status = 200
 
 [[redirects]]
+from = "/api/ai/research"
+to = "/.netlify/functions/prospect-research"
+status = 200
+
+[[redirects]]
   from = "/api/meta/deauthorize"
   to = "/.netlify/functions/meta-deauthorize"
   status = 200

@@ -18,7 +18,7 @@ export function HomePage() {
           <h1>Find the right next buyer—without giving up the sale.</h1>
           <p className="lede">Atlas Scout turns a seller-approved coin listing into a small set of evidence-backed prospect ideas. You stay in control of the price, the message, and every commitment.</p>
           <div className="button-row">
-            <LinkButton to="/scout">Try the demo <span aria-hidden="true">→</span></LinkButton>
+            <LinkButton to="/scout">Open Scout <span aria-hidden="true">→</span></LinkButton>
             <LinkButton to="/pitch" variant="secondary">View the pitch</LinkButton>
           </div>
           <p className="hero__note">Live Instagram import is limited to Meta role-authorized test accounts while access review is pending.</p>
