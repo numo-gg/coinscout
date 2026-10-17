@@ -10,7 +10,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Logo />
         <nav aria-label="Primary navigation">
           <NavLink to="/scout">Scout</NavLink>
-          <NavLink to="/pitch">Pitch</NavLink>
+          <NavLink to="/deck">Pitch</NavLink>
         </nav>
       </header>
       <main id="main">{children}</main>

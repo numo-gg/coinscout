@@ -45,32 +45,32 @@ status = 200
   status = 200
 
 [[redirects]]
-  from = "/deck"
-  to = "/pitch"
+  from = "/pitch"
+  to = "/deck"
   status = 301
   force = true
 
 [[redirects]]
   from = "/scout"
-  to = "/pitch"
+  to = "/deck"
   status = 301
   force = true
 
 [[redirects]]
   from = "/privacy"
-  to = "/pitch"
+  to = "/deck"
   status = 301
   force = true
 
 [[redirects]]
   from = "/data-deletion"
-  to = "/pitch"
+  to = "/deck"
   status = 301
   force = true
 
 [[redirects]]
   from = "/"
-  to = "/pitch"
+  to = "/deck"
   status = 301
   force = true
 

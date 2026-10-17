@@ -13,8 +13,8 @@ npm run build
 
 ## Public routes
 
-- `/pitch` — three-slide hackathon pitch
-- `/`, `/scout`, `/deck`, `/privacy`, and `/data-deletion` redirect to `/pitch`
+- `/deck` — three-slide hackathon pitch
+- `/`, `/pitch`, `/scout`, `/privacy`, and `/data-deletion` redirect to `/deck`
 
 ## Environment policy
 
