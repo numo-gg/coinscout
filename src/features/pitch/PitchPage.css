@@ -1,0 +1,204 @@
+.deck {
+  --deck-bg: #06140e;
+  --deck-ink: #effdf4;
+  --deck-muted: #acc6b5;
+  --deck-green: #6bf5a9;
+  --deck-gold: #f2c975;
+  --deck-line: rgba(202, 251, 222, .16);
+  color: var(--deck-ink);
+  background:
+    radial-gradient(circle at 8% 5%, rgba(75, 239, 150, .17), transparent 29rem),
+    radial-gradient(circle at 94% 86%, rgba(242, 201, 117, .09), transparent 27rem),
+    linear-gradient(142deg, #091c13 0%, var(--deck-bg) 55%, #07140e 100%);
+}
+
+.deck-nav {
+  width: min(100% - 48px, 1120px);
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-inline: auto;
+  border-bottom: 1px solid var(--deck-line);
+}
+
+.deck-nav__brand,
+.deck-nav a,
+.deck-label,
+.deck-close > span {
+  color: var(--deck-muted);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-decoration: none;
+}
+
+.deck-nav__brand { color: var(--deck-green); }
+.deck-nav ol { display: flex; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.deck-nav a:hover { color: var(--deck-ink); }
+
+.deck-slide {
+  min-height: min(720px, calc(100svh - 72px));
+  display: grid;
+  align-items: center;
+  padding: clamp(4rem, 9vw, 8rem) 24px;
+  scroll-margin-top: 16px;
+}
+
+.deck-slide + .deck-slide { border-top: 1px solid var(--deck-line); }
+
+.deck-slide__inner {
+  width: min(100%, 1120px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(290px, .82fr);
+  gap: clamp(2.5rem, 8vw, 9rem);
+  align-items: center;
+  margin-inline: auto;
+}
+
+.deck-copy { max-width: 740px; }
+.deck-label { margin: 0 0 1.1rem; color: var(--deck-green); }
+
+.deck h1,
+.deck h2,
+.deck h3 {
+  color: var(--deck-ink);
+  font-family: var(--display, Georgia, serif);
+}
+
+.deck h1,
+.deck h2 {
+  max-width: 760px;
+  margin: 0;
+  font-size: clamp(3.25rem, 6.5vw, 6.2rem);
+  font-weight: 700;
+  letter-spacing: -.075em;
+  line-height: .93;
+  text-wrap: balance;
+}
+
+.deck h2 { font-size: clamp(3rem, 5.6vw, 5.45rem); }
+
+.deck-lede {
+  max-width: 620px;
+  margin: 1.5rem 0 0;
+  color: var(--deck-muted);
+  font-size: clamp(1rem, 1.5vw, 1.17rem);
+  line-height: 1.7;
+}
+
+.deck-product-note {
+  max-width: 510px;
+  margin: 1.5rem 0 0;
+  padding-left: 1rem;
+  border-left: 1px solid var(--deck-green);
+  color: var(--deck-ink);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.deck-signal {
+  min-height: 315px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.4rem, 3vw, 2.3rem);
+  border: 1px solid var(--deck-line);
+  border-radius: 18px;
+  color: var(--deck-ink);
+  background:
+    radial-gradient(circle at 80% 18%, rgba(107, 245, 169, .17), transparent 9rem),
+    linear-gradient(135deg, rgba(21, 60, 39, .92), rgba(5, 20, 13, .88));
+  box-shadow: inset 0 1px rgba(231, 255, 241, .07), 0 22px 48px rgba(0, 0, 0, .18);
+}
+
+.deck-coin {
+  display: grid;
+  place-items: center;
+  width: min(100%, 210px);
+  aspect-ratio: 1;
+  padding: 10px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(245, 220, 150, .95), rgba(160, 114, 39, .95));
+  box-shadow: 0 16px 38px rgba(0, 0, 0, .24), inset 0 1px rgba(255, 255, 255, .65);
+}
+
+.deck-coin__ring {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 9px;
+  border: 1px dashed rgba(80, 53, 12, .62);
+  border-radius: 50%;
+}
+
+.deck-coin__face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: .55rem;
+  border: 1px solid rgba(86, 56, 8, .7);
+  border-radius: 50%;
+  color: #3e2b08;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: .55rem;
+  letter-spacing: .08em;
+}
+
+.deck-coin__face strong {
+  color: #3e2b08;
+  font-family: var(--display, Georgia, serif);
+  font-size: clamp(1.55rem, 2.6vw, 2.1rem);
+  letter-spacing: -.075em;
+  line-height: .85;
+  text-align: center;
+}
+
+.deck-signal p {
+  max-width: 250px;
+  margin: 1.25rem 0 0;
+  color: var(--deck-ink);
+  font-family: var(--display, Georgia, serif);
+  font-size: clamp(1.12rem, 1.8vw, 1.38rem);
+  letter-spacing: -.045em;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.deck-signal__detail {
+  display: block;
+  margin-top: .7rem;
+  color: var(--deck-muted);
+  font-size: .76rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.deck-product-panel { display: grid; gap: 1.15rem; align-self: center; }
+.deck-flow { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--deck-line); }
+.deck-flow li { display: grid; grid-template-columns: 52px 1fr; gap: 1rem; padding: 1.35rem 0; border-bottom: 1px solid var(--deck-line); }
+.deck-flow li > span { color: var(--deck-gold); font-family: var(--mono, ui-monospace, monospace); font-size: .68rem; letter-spacing: .08em; }
+.deck-flow h3 { margin: 0 0 .35rem; font-size: 1.4rem; letter-spacing: -.05em; line-height: 1.05; }
+.deck-flow p { margin: 0; color: var(--deck-muted); font-size: .84rem; line-height: 1.55; }
+
+.deck-product-panel__footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.deck-product-panel__footer > span { color: var(--deck-muted); font-family: var(--mono, ui-monospace, monospace); font-size: .56rem; font-weight: 700; letter-spacing: .09em; line-height: 1.45; }
+.deck-slide__action { display: inline-flex; flex: none; gap: .65rem; align-items: center; min-height: 40px; padding: 0 .85rem; border: 1px solid var(--deck-green); border-radius: 999px; color: #062416; background: var(--deck-green); font-size: .76rem; font-weight: 800; text-decoration: none; }
+.deck-slide__action:hover { color: #062416; background: #a2ffc9; }
+
+@media (max-width: 760px) {
+  .deck-nav { width: min(100% - 32px, 1120px); min-height: 62px; }
+  .deck-nav__brand { max-width: 210px; font-size: .54rem; }
+  .deck-slide { min-height: auto; padding-block: 5rem; }
+  .deck-slide__inner { grid-template-columns: 1fr; gap: 2.4rem; }
+  .deck h1, .deck h2 { font-size: clamp(3rem, 13.6vw, 4.65rem); }
+  .deck-signal { min-height: 260px; }
+  .deck-product-panel__footer { align-items: flex-start; flex-direction: column; }
+}
