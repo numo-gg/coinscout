@@ -77,6 +77,11 @@ export function ScoutPage() {
   const [searchParams] = useSearchParams();
   const [state, dispatch] = useReducer(scoutReducer, initialScoutState);
   const [offerInput, setOfferInput] = useState("$510");
+  const [inventoryTitle, setInventoryTitle] = useState("");
+  const [inventoryDescription, setInventoryDescription] = useState("");
+  const [inventorySubmitted, setInventorySubmitted] = useState(false);
+  const [criteria, setCriteria] = useState({ ask: "$550", rangeHigh: "$550", rangeLow: "$500", hardPrice: "$525" });
+  const [criteriaSaved, setCriteriaSaved] = useState(false);
   const [instagramConnection, setInstagramConnection] = useState<InstagramConnection | null>(null);
   const [liveListing, setLiveListing] = useState<InstagramMediaOption | null>(null);
   const [liveAnalysis, setLiveAnalysis] = useState<RemoteListingAnalysis | null>(null);
@@ -86,6 +91,12 @@ export function ScoutPage() {
   const [liveBusy, setLiveBusy] = useState<"analysis" | "research" | "draft" | null>(null);
   const isInstagramListing = Boolean(liveListing);
   const activeListing = listingFacts(liveListing, liveAnalysis);
+  const visibleListingTitle = !isInstagramListing && inventorySubmitted && inventoryTitle.trim()
+    ? inventoryTitle.trim()
+    : activeListing.title;
+  const visibleListingCaption = !isInstagramListing && inventorySubmitted && inventoryDescription.trim()
+    ? inventoryDescription.trim()
+    : activeListing.caption;
   const prospects = isInstagramListing ? (liveProspects ?? []) : DEMO_PROSPECTS;
   const selectedProspect = prospects.find((prospect) => prospect.id === state.selectedProspectId);
   const counter = state.lastDecision?.kind === "counter" ? state.lastDecision : null;
@@ -208,6 +219,53 @@ export function ScoutPage() {
               </div>
               {state.selectedListingId && <Badge tone="safe">Selected</Badge>}
             </div>
+            <form
+              aria-label="Seller inventory intake"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setInventorySubmitted(true);
+              }}
+              style={{
+                display: "grid",
+                gap: ".7rem",
+                margin: "0 0 1rem",
+                padding: "1rem",
+                border: "1px solid rgba(110, 181, 139, .42)",
+                background: "linear-gradient(135deg, #0d211c, #153329)",
+                color: "#edf7ef",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "baseline", flexWrap: "wrap" }}>
+                <div>
+                  <p className="eyebrow" style={{ color: "#a9dfba" }}>Seller inventory</p>
+                  <strong style={{ fontFamily: "var(--display)", fontSize: "1.15rem" }}>Send one item into the local demo</strong>
+                </div>
+                {inventorySubmitted && <span style={{ color: "#b6e8c4", fontSize: ".73rem", fontWeight: 800 }}>SAVED FOR THIS SESSION</span>}
+              </div>
+              <label style={{ display: "grid", gap: ".35rem", fontSize: ".78rem", fontWeight: 700 }}>
+                Item title <span style={{ color: "#b8d0bf", fontWeight: 400 }}>(optional)</span>
+                <input
+                  value={inventoryTitle}
+                  onChange={(event) => { setInventoryTitle(event.target.value); setInventorySubmitted(false); }}
+                  placeholder="1921 Peace Dollar · PCGS MS63"
+                  style={{ width: "100%", border: "1px solid rgba(255,255,255,.22)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".65rem .75rem" }}
+                />
+              </label>
+              <label style={{ display: "grid", gap: ".35rem", fontSize: ".78rem", fontWeight: 700 }}>
+                Seller notes <span style={{ color: "#b8d0bf", fontWeight: 400 }}>(optional)</span>
+                <textarea
+                  value={inventoryDescription}
+                  onChange={(event) => { setInventoryDescription(event.target.value); setInventorySubmitted(false); }}
+                  placeholder="Condition, certification, or a short listing note"
+                  rows={2}
+                  style={{ width: "100%", resize: "vertical", border: "1px solid rgba(255,255,255,.22)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".65rem .75rem" }}
+                />
+              </label>
+              <div style={{ display: "flex", gap: ".75rem", alignItems: "center", flexWrap: "wrap" }}>
+                <Button type="submit" variant="secondary" style={{ color: "#eff9f1", borderColor: "#9ed5ad" }}>Save inventory</Button>
+                <small style={{ color: "#b8d0bf", lineHeight: 1.4 }}>Local demo only — nothing is posted, messaged, or shared.</small>
+              </div>
+            </form>
             <div className="scout-live-import">
               <div>
                 <p className="scout-live-import__eyebrow">Optional live import</p>
@@ -235,11 +293,11 @@ export function ScoutPage() {
                 <span>{isInstagramListing ? "LIVE" : "1921"}</span><b>{isInstagramListing ? "IG" : "AS"}</b><small>{isInstagramListing ? "POST" : "PEACE"}</small>
               </div>
               <div>
-                <h3>{activeListing.title}</h3>
-                <p>{activeListing.caption}</p>
+                <h3>{visibleListingTitle}</h3>
+                <p>{visibleListingCaption}</p>
                 {!state.selectedListingId ? (
                   <Button type="button" onClick={() => command("listing:demo", { type: "select_listing", listingId: DEMO_LISTING.id, source: "demo" })}>
-                    Use this demo listing <span aria-hidden="true">→</span>
+                    {inventorySubmitted ? "Use submitted inventory" : "Use this demo listing"} <span aria-hidden="true">→</span>
                   </Button>
                 ) : <p className="scout-card__confirmation">{isInstagramListing ? "Authorized post locked for this short, server-side session." : "Demo listing locked for this local walkthrough."}</p>}
               </div>
@@ -289,13 +347,51 @@ export function ScoutPage() {
               </div>
               <Badge tone="warning">Never model-decided</Badge>
             </div>
+            <form
+              aria-label="Seller price criteria"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setCriteriaSaved(true);
+              }}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                gap: ".65rem",
+                margin: "0 0 1rem",
+                padding: ".9rem",
+                border: "1px solid rgba(35,112,90,.45)",
+                background: "#10271f",
+                color: "#eff8ef",
+              }}
+            >
+              <label style={{ display: "grid", gap: ".3rem", fontSize: ".72rem", fontWeight: 800 }}>
+                Asking price
+                <input value={criteria.ask} inputMode="decimal" onChange={(event) => { setCriteria({ ...criteria, ask: event.target.value }); setCriteriaSaved(false); }} style={{ minWidth: 0, border: "1px solid rgba(255,255,255,.24)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".56rem" }} />
+              </label>
+              <label style={{ display: "grid", gap: ".3rem", fontSize: ".72rem", fontWeight: 800 }}>
+                Range high
+                <input value={criteria.rangeHigh} inputMode="decimal" onChange={(event) => { setCriteria({ ...criteria, rangeHigh: event.target.value }); setCriteriaSaved(false); }} style={{ minWidth: 0, border: "1px solid rgba(255,255,255,.24)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".56rem" }} />
+              </label>
+              <label style={{ display: "grid", gap: ".3rem", fontSize: ".72rem", fontWeight: 800 }}>
+                Range low
+                <input value={criteria.rangeLow} inputMode="decimal" onChange={(event) => { setCriteria({ ...criteria, rangeLow: event.target.value }); setCriteriaSaved(false); }} style={{ minWidth: 0, border: "1px solid rgba(255,255,255,.24)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".56rem" }} />
+              </label>
+              <label style={{ display: "grid", gap: ".3rem", fontSize: ".72rem", fontWeight: 800 }}>
+                Hard price
+                <input value={criteria.hardPrice} inputMode="decimal" onChange={(event) => { setCriteria({ ...criteria, hardPrice: event.target.value }); setCriteriaSaved(false); }} style={{ minWidth: 0, border: "1px solid rgba(255,255,255,.24)", background: "rgba(255,255,255,.08)", color: "#fff", padding: ".56rem" }} />
+              </label>
+              <div style={{ gridColumn: "1 / -1", display: "flex", gap: ".7rem", alignItems: "center", flexWrap: "wrap" }}>
+                <Button type="submit" variant="secondary" disabled={!state.factsConfirmed || state.reserved} style={{ color: "#eff8ef", borderColor: "#9ed5ad" }}>Save criteria</Button>
+                <small aria-live="polite" style={{ color: "#b8d0bf", lineHeight: 1.4 }}>{criteriaSaved ? "Seller criteria saved locally. Deterministic offer decisions remain locked to the verified demo policy." : "Ask $550 · range $550–$500 · hard price $525."}</small>
+              </div>
+            </form>
             <div className="scout-mandate" aria-label="Seller pricing mandate">
-              <div><span>Ask</span><strong>{formatUsd(DEFAULT_MANDATE.askCents)}</strong><small>shipped</small></div>
-              <div><span>Auto-accept</span><strong>{formatUsd(DEFAULT_MANDATE.autoAcceptCents)}</strong><small>shipped</small></div>
-              <div className="scout-mandate__private"><span>Private floor</span><strong>{formatUsd(DEFAULT_MANDATE.privateFloorCents)}</strong><small>seller only</small></div>
+              <div><span>Ask</span><strong>{criteria.ask}</strong><small>seller-visible</small></div>
+              <div><span>Hard price</span><strong>{criteria.hardPrice}</strong><small>auto-accept</small></div>
+              <div className="scout-mandate__private"><span>Range floor</span><strong>{criteria.rangeLow}</strong><small>seller only</small></div>
             </div>
             <div className="scout-ladder" aria-label="Bounded counter ladder">
-              <span>Bounded counter ladder</span>
+              <span>Seller range {criteria.rangeHigh} → {criteria.rangeLow}</span>
               {DEFAULT_MANDATE.counterLadderCents.map((amount, index) => <strong key={amount}>{formatUsd(amount)}{index < 2 && <i aria-hidden="true">→</i>}</strong>)}
             </div>
             <label className="scout-floor-control">
