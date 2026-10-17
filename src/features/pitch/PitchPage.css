@@ -25,8 +25,7 @@
 
 .deck-nav__brand,
 .deck-nav a,
-.deck-label,
-.deck-close > span {
+.deck-label {
   color: var(--deck-muted);
   font-family: var(--mono, ui-monospace, monospace);
   font-size: .64rem;

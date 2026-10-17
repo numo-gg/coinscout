@@ -5,7 +5,7 @@ import { LinkButton } from "@/shared/ui/Button";
 const guardrails = [
   ["Seller sets the mandate", "Shipped-price rules stay deterministic and private."],
   ["Every lead is cited", "Public sources, excerpted evidence, and visible uncertainty."],
-  ["Nothing moves on its own", "Outreach, payment, and shipping are simulated and approval-gated."],
+  ["Nothing moves on its own", "Scout does not message buyers, take payment, or arrange shipping."],
 ];
 
 export function HomePage() {
@@ -15,8 +15,8 @@ export function HomePage() {
         <div className="hero__copy">
           <Badge tone="brass">ATLAS SCOUT / CONTROLLED DEMO</Badge>
           <p className="eyebrow">From one listing to a confident conversation.</p>
-          <h1>Find the right next buyer—without giving up the sale.</h1>
-          <p className="lede">Atlas Scout turns a seller-approved coin listing into a small set of evidence-backed prospect ideas. You stay in control of the price, the message, and every commitment.</p>
+          <h1>Find the next relevant collector conversation—without giving up control.</h1>
+          <p className="lede">Atlas Scout turns a seller-approved coin listing into a small set of cited public research leads. You stay in control of the price and every next step.</p>
           <div className="button-row">
             <LinkButton to="/scout">Open Scout <span aria-hidden="true">→</span></LinkButton>
             <LinkButton to="/deck" variant="secondary">View the pitch</LinkButton>
@@ -53,7 +53,7 @@ export function HomePage() {
           <h2>Structured assistance, not autonomous commerce.</h2>
         </div>
         <div>
-          <p>The model can organize seller-approved facts, research public organizations, and draft a note. A pure pricing policy alone can evaluate an offer. Every irreversible step remains with the seller.</p>
+          <p>The model organizes seller-approved facts and researches public organizations. Every action remains with the seller.</p>
           <Link className="text-link" to="/deck">See the product story <span aria-hidden="true">→</span></Link>
         </div>
       </section>

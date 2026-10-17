@@ -45,6 +45,11 @@ status = 200
   status = 200
 
 [[redirects]]
+  from = "/pitch"
+  to = "/deck"
+  status = 301
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

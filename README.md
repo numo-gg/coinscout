@@ -15,7 +15,7 @@ npm run build
 
 - `/` — launch page
 - `/scout` — interactive Atlas Scout listing-to-research flow
-- `/deck` — static hackathon pitch
+- `/deck` — two-page product pitch
 - `/pitch` — compatibility redirect to `/deck`
 - `/privacy` — privacy notice
 - `/data-deletion` — data-deletion instructions
