@@ -6,9 +6,9 @@ const problemPoints = [
   "Good inventory sits while sellers search.",
 ] as const;
 
-const listingFacts = ["1881-S", "Silver dollar", "MS-64", "Silver"] as const;
+const listingFacts = ["1824", "Mexico City Mint", "8 Reales", "Silver"] as const;
 
-const buyerSignals = ["Silver-dollar collectors", "Variety specialists", "Specialist coin dealers"] as const;
+const buyerSignals = ["Mexican coin collectors", "Cap-and-rays specialists", "Latin American coin dealers"] as const;
 
 const outcomeSteps = [
   ["01", "Set the terms", "Price range, timing, and what a good deal looks like."],
@@ -16,12 +16,13 @@ const outcomeSteps = [
   ["03", "Carry the deal", "Move from buyer search through a seller-approved close."],
 ] as const;
 
-function CoinImage() {
+function MexicanEightRealesImage() {
   return (
-    <figure className="pitchdeck-coin" role="img" aria-label="Historic silver coin">
-      <div className="pitchdeck-coin__orbit pitchdeck-coin__orbit--outer" aria-hidden="true" />
-      <div className="pitchdeck-coin__orbit pitchdeck-coin__orbit--inner" aria-hidden="true" />
-      <img className="pitchdeck-coin__image" src="/assets/morgan-dollar-1881-s.jpg" alt="" />
+    <figure className="pitchdeck-coin">
+      <div className="pitchdeck-coin__orbit pitchdeck-coin__orbit--outer" />
+      <div className="pitchdeck-coin__orbit pitchdeck-coin__orbit--inner" />
+      <img className="pitchdeck-coin__image" src="/assets/mexican-8-reales-1824.jpg" alt="1824 Mexican 8 reales, cap-and-rays side" />
+      <figcaption>Mexican 8 Reales</figcaption>
     </figure>
   );
 }
@@ -56,7 +57,7 @@ export function PitchPage() {
           </ul>
         </div>
         <div className="pitchdeck-problem-art">
-          <CoinImage />
+          <MexicanEightRealesImage />
         </div>
       </section>
 
@@ -72,7 +73,7 @@ export function PitchPage() {
         <div className="pitchdeck-match" aria-label="Example CoinScout matching flow">
           <div className="pitchdeck-match__listing">
             <span className="pitchdeck-match__eyebrow">ONE LISTING</span>
-            <strong>1881-S<br />SILVER DOLLAR</strong>
+            <strong>1824<br />MEXICAN 8 REALES</strong>
             <ul>
               {listingFacts.map((fact) => <li key={fact}>{fact}</li>)}
             </ul>

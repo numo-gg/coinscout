@@ -7,14 +7,13 @@ function Deferred({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="route-loading" aria-live="polite">Loading the pitch…</div>}>{children}</Suspense>;
 }
 
-function RedirectToDeck() {
+function RedirectToPitch() {
   const location = useLocation();
-  return <Navigate replace to={`/deck${location.search}${location.hash}`} />;
+  return <Navigate replace to={`/pitch${location.search}${location.hash}`} />;
 }
 
 export const router = createBrowserRouter([
-  { path: "/", element: <RedirectToDeck /> },
-  { path: "/deck", element: <Deferred><PitchPage /></Deferred> },
-  { path: "/pitch", element: <RedirectToDeck /> },
-  { path: "*", element: <RedirectToDeck /> },
+  { path: "/", element: <RedirectToPitch /> },
+  { path: "/pitch", element: <Deferred><PitchPage /></Deferred> },
+  { path: "*", element: <RedirectToPitch /> },
 ]);
