@@ -45,9 +45,9 @@ export function PitchPage() {
       <section className="pitchdeck-hero" aria-labelledby="pitch-title">
         <div className="pitchdeck-hero__content">
           <p className="pitchdeck-label">COINSCOUT / HACKATHON PITCH</p>
-          <h1 id="pitch-title">Turn one listing into a focused collector search.</h1>
+          <h1 id="pitch-title">Scout sells your coins on your behalf.</h1>
           <p className="pitchdeck-hero__lede">
-            CoinScout gives a seller a short, controlled path from an Instagram listing to cited public-market research.
+            For one listing, Scout finds the best buyer for your coin niche, then gives you cited leads to review before you decide what happens next.
           </p>
           <div className="pitchdeck-hero__actions">
             <a className="pitchdeck-hero__action" href="#flow">See the four steps <span aria-hidden="true">↓</span></a>
@@ -58,7 +58,7 @@ export function PitchPage() {
           <div className="pitchdeck-coin__rim" />
           <div className="pitchdeck-coin__face">
             <span>COIN</span>
-            <strong>SCOUT</strong>
+            <strong>MORGAN<br />DOLLAR</strong>
             <span>PUBLIC SIGNALS</span>
           </div>
         </div>
