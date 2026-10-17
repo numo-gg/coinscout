@@ -19,7 +19,7 @@ export function HomePage() {
           <p className="lede">Atlas Scout turns a seller-approved coin listing into a small set of evidence-backed prospect ideas. You stay in control of the price, the message, and every commitment.</p>
           <div className="button-row">
             <LinkButton to="/scout">Open Scout <span aria-hidden="true">→</span></LinkButton>
-            <LinkButton to="/deck" variant="secondary">View the pitch</LinkButton>
+            <LinkButton to="/pitch" variant="secondary">View the pitch</LinkButton>
           </div>
           <p className="hero__note">Live Instagram import is limited to Meta role-authorized test accounts while access review is pending.</p>
         </div>
@@ -54,7 +54,7 @@ export function HomePage() {
         </div>
         <div>
           <p>The model can organize seller-approved facts, research public organizations, and draft a note. A pure pricing policy alone can evaluate an offer. Every irreversible step remains with the seller.</p>
-          <Link className="text-link" to="/deck">See the product story <span aria-hidden="true">→</span></Link>
+          <Link className="text-link" to="/pitch">See the product story <span aria-hidden="true">→</span></Link>
         </div>
       </section>
     </>
