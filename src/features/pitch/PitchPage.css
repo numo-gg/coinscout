@@ -12,6 +12,20 @@
     linear-gradient(142deg, #091c13 0%, var(--deck-bg) 55%, #07140e 100%);
 }
 
+body:has(.deck),
+.site-shell:has(.deck) {
+  background: #06140e;
+}
+
+.site-shell:has(.deck) .site-header,
+.site-shell:has(.deck) .site-footer {
+  display: none;
+}
+
+.site-shell:has(.deck) main {
+  min-height: 100vh;
+}
+
 .deck-nav {
   width: min(100% - 48px, 1120px);
   min-height: 72px;
