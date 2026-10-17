@@ -262,18 +262,27 @@ html:has(.pitchdeck) { scroll-snap-type: y proximity; }
   border-color: rgb(255 255 255 / 24%);
 }
 
-.pitchdeck-coin__image {
+.pitchdeck-coin__crop {
   width: 72%;
   aspect-ratio: 1;
   position: relative;
   z-index: 1;
-  display: block;
-  object-fit: cover;
+  overflow: hidden;
   border: 1px solid rgb(255 255 255 / 52%);
   border-radius: 50%;
-  filter: contrast(1.1) saturate(.78);
-  mix-blend-mode: screen;
+  background: hsl(48 25% 96%);
   box-shadow: 16px 22px 32px rgb(0 0 0 / 25%);
+}
+
+.pitchdeck-coin__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: left center;
+  filter: brightness(1.07) contrast(1.1) saturate(.84);
+  mix-blend-mode: multiply;
+  transform: scale(1.13);
 }
 
 .pitchdeck-coin figcaption {

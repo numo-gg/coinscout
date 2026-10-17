@@ -1,3 +1,3 @@
 # Asset credits
 
-`coin-hero.jpg` — historic United States silver-dollar scan. Public domain (PD-Coin scan / PD-US). Source: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:1881-S_PCGS_MS66_Morgan_dollar_(Coins2.calkinsc.com).jpg).
+`mexican-8-reales-1894.jpg` — obverse and reverse of a 1894 Mexican 8 reales silver coin from the Mexico City Mint. Photograph by As6022014, released into the public domain. Source: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mexico8real.jpg).
