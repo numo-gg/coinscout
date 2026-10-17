@@ -1,0 +1,31 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+:root {
+  --sans: "Inter", system-ui, sans-serif;
+  --mono: "DM Mono", ui-monospace, monospace;
+  color: hsl(161 24% 13%);
+  background: hsl(0 0% 97.6%);
+  font-family: var(--sans);
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+  background: hsl(0 0% 97.6%);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+a { -webkit-tap-highlight-color: transparent; }
+
+::selection {
+  color: hsl(161 24% 13%);
+  background: hsl(74 100% 50% / 55%);
+}

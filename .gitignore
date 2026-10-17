@@ -3,7 +3,6 @@ dist/
 .netlify/
 .env
 .env.*
-!.env.example
 *.log
 coverage/
 *.tsbuildinfo

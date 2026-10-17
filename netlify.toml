@@ -1,48 +1,9 @@
 [build]
   command = "npm run build"
   publish = "dist"
-  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"
-
-[functions]
-  node_bundler = "esbuild"
-
-[[redirects]]
-  from = "/api/instagram/start"
-  to = "/.netlify/functions/instagram-start"
-  status = 200
-
-[[redirects]]
-  from = "/api/instagram/callback"
-  to = "/.netlify/functions/instagram-callback"
-  status = 200
-
-[[redirects]]
-  from = "/api/instagram/disconnect"
-  to = "/.netlify/functions/instagram-disconnect"
-  status = 200
-
-[[redirects]]
-  from = "/api/instagram/session"
-  to = "/.netlify/functions/instagram-session"
-  status = 200
-
-[[redirects]]
-from = "/api/ai/research"
-to = "/.netlify/functions/prospect-research"
-status = 200
-
-[[redirects]]
-  from = "/api/meta/deauthorize"
-  to = "/.netlify/functions/meta-deauthorize"
-  status = 200
-
-[[redirects]]
-  from = "/api/data-deletion"
-  to = "/.netlify/functions/data-deletion"
-  status = 200
 
 [[redirects]]
   from = "/deck"

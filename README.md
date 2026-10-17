@@ -1,23 +1,22 @@
-# CoinScout
+# CoinScout Pitch
 
-CoinScout currently ships a three-slide pitch about focused buyer discovery for collectible coins. The public site exposes the pitch deck only.
+A static, three-slide pitch about focused buyer discovery for collectible coins.
 
 ## Run locally
 
 ```bash
 npm install
 npm run dev
-npm run test
 npm run build
 ```
 
 ## Public routes
 
-- `/pitch` — three-slide hackathon pitch
-- `/`, `/scout`, `/deck`, `/privacy`, and `/data-deletion` redirect to `/pitch`
+- `/pitch` — the complete pitch deck
+- `/`, `/deck`, and former product URLs redirect to `/pitch`
 
-## Environment policy
+## Scope
 
-Copy `.env.example` only for local development. Production credentials are Netlify Function secrets, never `VITE_*` variables. Local and deploy-preview mode use fixtures (`ATLAS_MODE=fixture`); only production may use `ATLAS_MODE=live`.
+This repository intentionally contains only the static pitch deck, its image asset, and the build/deployment configuration required to publish it. It has no server functions, APIs, authentication, environment variables, or third-party integrations.
 
-**Never commit secrets, OAuth tokens, customer data, Instagram media, or private pricing rules.** The DeepSeek credential previously shared in chat is treated as exposed and must not be used here.
+The Mexican 8 reales image credit is recorded in [`public/assets/LICENSES.md`](public/assets/LICENSES.md).
