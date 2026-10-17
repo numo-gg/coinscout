@@ -12,11 +12,11 @@ npm run build
 
 ## Public routes
 
-- `/pitch` — the complete pitch deck
-- `/`, `/deck`, and former product URLs redirect to `/pitch`
+- `/deck` — the complete pitch deck
+- `/`, `/pitch`, and former product URLs serve the deck for compatibility
 
 ## Scope
 
 This repository intentionally contains only the static pitch deck, its image asset, and the build/deployment configuration required to publish it. It has no server functions, APIs, authentication, environment variables, or third-party integrations.
 
-The Mexican 8 reales image credit is recorded in [`public/assets/LICENSES.md`](public/assets/LICENSES.md).
+The coin image credit is recorded in [`public/assets/LICENSES.md`](public/assets/LICENSES.md).
